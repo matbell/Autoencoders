@@ -12,6 +12,7 @@ from keras.layers import Input, Dense, Lambda
 from keras.models import Model
 from keras import backend as K
 from keras import metrics
+from keras import optimizers
 
 
 class Vae:
@@ -66,17 +67,18 @@ class Vae:
         kl_loss = - 0.5 * K.sum(1 + self.z_log_var - K.square(self.z_mean) - K.exp(self.z_log_var), axis=-1)
         vae_loss = K.mean(xent_loss + kl_loss)
 
+        optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+
         self.vae.add_loss(vae_loss)
-        self.vae.compile(optimizer='rmsprop')
+        self.vae.compile(optimizer=optimizer)
         self.vae.summary()
 
-    def fit(self, x_train, x_test):
+    def fit_model(self, x_train):
 
         self.vae.fit(x_train,
                      shuffle=True,
                      epochs=self.epochs,
-                     batch_size=self.batch_size,
-                     validation_data=(x_test, None))
+                     batch_size=self.batch_size)
 
     def encode(self, data):
         # build a model to project inputs on the latent space
