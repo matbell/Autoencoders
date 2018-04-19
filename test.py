@@ -1,9 +1,11 @@
 from clustering_utils import eval_clustering
 from datasets import load_subset_context
-from autoencoder import Autoencoder
+from models.autoencoder import Autoencoder
 from models.vae import Vae
 from utils import log
 from sklearn.decomposition import PCA
+from sklearn.cluster import FeatureAgglomeration
+from sklearn.random_projection GaussianRandomProjection, SparseRandomProjection
 
 
 def test_simple_autoencoder(x, y, pca_dim=None):
@@ -121,11 +123,49 @@ def test_clustering(x, y):
     log("raw_clustering_results.txt", ",".join(data))
 
 
+def test_feature_agglomeration(x, y):
+
+    log_file = "feature_aggl_results.txt"
+
+    for components in range(2, 20):
+
+        encoded_data = FeatureAgglomeration(n_clusters=components).fit_transform(x)
+
+        # Clustering latent points
+        k_acc, k_homo, k_n_clusters = eval_clustering(encoded_data, y)
+        data = [str(components), str(k_acc), str(k_homo), str(k_n_clusters)]
+
+        # Log clustering results
+        log(log_file, ",".join(data))
+
+
+def test_random_projection(x, y):
+
+    log_file = "random_proj_results.txt"
+
+    for components in range(2, 20):
+
+        gaussian_data = GaussianRandomProjection(n_components=components).fit_transform(x)
+        sparse_data = SparseRandomProjection(n_components=components).fit_transform(x)
+
+        # Clustering latent points
+        gk_acc, gk_homo, gk_n_clusters = eval_clustering(gaussian_data, y)
+        sk_acc, sk_homo, sk_n_clusters = eval_clustering(sparse_data, y)
+        data = [str(components), str(gk_acc), str(gk_homo), str(gk_n_clusters), str(sk_acc), str(sk_homo),
+                str(sk_n_clusters)]
+
+        # Log clustering results
+        log(log_file, ",".join(data))
+
+
+
 if __name__ == '__main__':
     x, y, labels = load_subset_context(data_path='/home/mattia/Development/Sensing/data_analysis/contextLabeler/output',
                                        activities_to_keep=None)
 
     test_clustering(x, y)
+    test_feature_agglomeration(x, y)
+    test_random_projection(x, y)
     test_pca(x, y)
     test_simple_autoencoder(x, y)
     test_deep_autoencoder(x, y)
